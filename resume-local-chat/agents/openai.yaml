@@ -1,0 +1,3 @@
+display_name: Resume Local Chat
+short_description: Recover Codex Desktop local chats hidden after provider or account changes.
+default_prompt: Use this skill to inspect and repair local Codex Desktop chat history when existing sessions do not appear in the sidebar.

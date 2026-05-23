@@ -1,89 +1,89 @@
 # Resume Local Chat Skill
 
-[中文说明](README.zh-CN.md)
+[English](README.en.md)
 
-Recover local Codex Desktop chat history when older conversations still exist on disk but disappear from the left sidebar after switching API keys, third-party providers, models, login methods, or subscription accounts.
+恢复 Codex Desktop 本地聊天记录：当旧对话明明还在磁盘上，却因为切换 API Key、第三方 Provider、模型、登录方式或订阅账户后，从左侧历史列表里消失时，可以使用这个 skill 进行检查和修复。
 
-This repository packages a Codex skill named `resume-local-chat`. It is designed for Windows Codex Desktop installations where local state usually lives under:
+本仓库打包了一个 Codex skill：`resume-local-chat`。它主要面向 Windows 上的 Codex Desktop，本地状态通常位于：
 
 ```text
 %USERPROFILE%\.codex
 ```
 
-## What It Fixes
+## 能解决什么问题
 
-- `session_index.jsonl` is missing, stale, or incomplete.
-- Session `.jsonl` logs exist but are not shown in the sidebar.
-- Old threads are still assigned to a previous `model_provider` / `model` in `state_5.sqlite`.
-- `config.toml` has a current model but no explicit `model_provider`.
-- Switching between a third-party API provider and an OpenAI subscription account makes local chats look lost.
+- `session_index.jsonl` 丢失、过期或不完整。
+- 本地 session `.jsonl` 日志还在，但左侧列表不显示。
+- 旧线程在 `state_5.sqlite` 里仍然绑定到旧的 `model_provider` / `model`。
+- `config.toml` 里有当前模型，但没有显式的 `model_provider`。
+- 从第三方 API Provider 切换到 OpenAI 订阅账户后，本地历史记录看起来像丢失了。
 
-The skill treats local chat logs as the source of truth and avoids changing message contents. For provider/account switch repairs, it only rewrites the first `session_meta` line in each session file and the relevant `threads` rows in SQLite.
+这个 skill 会把本地聊天日志当作事实来源，尽量避免改动真实对话内容。对于 Provider / 账户切换导致的问题，它只会改每个 session 文件第一行的 `session_meta`，以及 SQLite 里 `threads` 表对应的 Provider / Model 字段。
 
-## Install
+## 安装
 
-Clone or download this repository, then copy the skill folder into your Codex skills directory:
+克隆或下载本仓库，然后把 skill 文件夹复制到 Codex 的 skills 目录：
 
 ```powershell
 Copy-Item -Recurse .\resume-local-chat "$env:USERPROFILE\.codex\skills\resume-local-chat" -Force
 ```
 
-Restart Codex Desktop so the skill metadata is discovered.
+复制完成后，重启 Codex Desktop，让 Codex 重新发现这个 skill。
 
-## Use
+## 使用方式
 
-In Codex, call the skill directly:
+在 Codex 中直接调用：
 
 ```text
 $resume-local-chat restore my local chats after switching providers
 ```
 
-or:
+或者：
 
 ```text
 Use $resume-local-chat to recover chats missing from the Codex left sidebar.
 ```
 
-The skill will inspect local Codex state, make backups before any mutation, repair provider/model mismatches when appropriate, rebuild `session_index.jsonl`, and ask you to restart Codex Desktop so the sidebar reloads.
+调用后，Codex 会检查本地状态，在修改任何文件之前创建备份；如果发现 Provider / Model 不一致，会修复对应元数据，重建 `session_index.jsonl`，最后提示你重启 Codex Desktop 来刷新左侧历史列表。
 
-## Included Script
+## 内置脚本
 
-The skill includes `scripts/repair_codex_history.py` for repeatable repairs.
+这个 skill 附带了 `scripts/repair_codex_history.py`，用于可重复执行的状态检查和修复。
 
-Check status without modifying anything:
+只检查状态，不修改任何文件：
 
 ```powershell
 python .\resume-local-chat\scripts\repair_codex_history.py status --json
 ```
 
-Synchronize old threads to the inferred current provider/model:
+把旧线程同步到推断出的当前 Provider / Model：
 
 ```powershell
 python .\resume-local-chat\scripts\repair_codex_history.py sync --json
 ```
 
-Override the target provider/model if needed:
+如果需要手动指定目标 Provider / Model：
 
 ```powershell
 python .\resume-local-chat\scripts\repair_codex_history.py sync --provider openai --model gpt-5.5 --json
 ```
 
-## Safety
+## 安全机制
 
-Before `sync`, the script writes a timestamped backup under:
+执行 `sync` 前，脚本会在下面的目录创建带时间戳的备份：
 
 ```text
 %USERPROFILE%\.codex\history_sync_backups
 ```
 
-The backup includes:
+备份内容包括：
 
-- a SQLite backup of `state_5.sqlite`
-- a copy of `session_index.jsonl`
-- a JSON snapshot of every session file's original first line
+- `state_5.sqlite` 的 SQLite 备份
+- `session_index.jsonl` 的副本
+- 每个 session 文件原始第一行的 JSON 快照
 
-Archived state is preserved. The script does not unarchive chats unless you manually change the database afterward.
+脚本会保留 archived 状态，不会自动把归档对话恢复成未归档。除非你之后手动修改数据库，否则归档状态不会改变。
 
-## Repository Note
+## 仓库说明
 
-The repository name intentionally follows the remote name `Resuem-Local-Chat-Skill`, while the Codex skill itself is correctly named `resume-local-chat`.
+仓库名沿用了远程仓库名 `Resuem-Local-Chat-Skill`，但 Codex skill 本身的名称是正确的：`resume-local-chat`。

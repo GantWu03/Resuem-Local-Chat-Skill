@@ -1,5 +1,7 @@
 # Resume Local Chat Skill
 
+[中文说明](README.zh-CN.md)
+
 Recover local Codex Desktop chat history when older conversations still exist on disk but disappear from the left sidebar after switching API keys, third-party providers, models, login methods, or subscription accounts.
 
 This repository packages a Codex skill named `resume-local-chat`. It is designed for Windows Codex Desktop installations where local state usually lives under:
